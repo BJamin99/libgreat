@@ -155,6 +155,15 @@ void platform_scu_configure_pin_fast_io(uint8_t group, uint8_t pin, uint8_t func
  */
 void platform_scu_configure_pin_uart(uint8_t group, uint8_t pin, uint8_t function);
 
+/**
+ * Configures a given pin, applying the options that make the most sense for a common I2C.
+ *
+ * @param group The SCU group for the pin to be configured. This is the first number, X, in the LPC PX_Y naming scheme.
+ * @param pin The SCU pin number for the pin to be configured. This is the second number, Y, in the
+ * 		LPC PX_Y naming scheme.
+ * @param function The function number to set the given pin to I2C.
+ */
+void platform_scu_configure_pin_i2c(uint8_t group, uint8_t pin, uint8_t function);
 
 
 

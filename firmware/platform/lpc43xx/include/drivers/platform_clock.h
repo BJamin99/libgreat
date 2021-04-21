@@ -180,7 +180,7 @@ typedef volatile struct ATTR_PACKED {
 
 	RESERVED_WORDS(62);
 
-	// M4 core related clcoks.
+	// M4 core related clocks.
 	struct {
 		platform_branch_clock_register_t bus;
 		platform_branch_clock_register_t spifi;
