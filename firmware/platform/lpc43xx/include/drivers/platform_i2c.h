@@ -10,6 +10,40 @@
 #include <toolchain.h>
 #include <drivers/platform_clock.h>
 
+//Controller Transmitter Mode
+#define STAT_CODE_START_TRANS 0x08
+#define STAT_CODE_REPEAT_START_TRANS 0x10
+#define STAT_CODE_SLA_W_TRANS_ACK 0x18
+#define STAT_CODE_SLA_W_TRANS_NACK 0x20
+#define STAT_CODE_CTRL_DAT_TRANS_ACK 0x28
+#define STAT_CODE_CTRL_DAT_TRANS_NACK 0x30
+//Controller Transmitter/Receiver Mode
+#define STAT_CODE_ARB_LOST 0x38
+//Controller Receiver Mode
+#define STAT_CODE_SLA_R_TRANS_ACK 0x40
+#define STAT_CODE_SLA_R_TRANS_NACK 0x48
+#define STAT_CODE_CTRL_DAT_RECV_ACK 0x50
+#define STAT_CODE_CTRL_DAT_RECV_NACK 0x58
+//Peripheral Receiver Mode
+#define STAT_CODE_SLA_W_RECV_ACK 0x60
+#define STAT_CODE_ARB_LOST_SLA_W_RECV_ACK 0x68
+#define STAT_CODE_GC_RECV_ACK 0x70
+#define STAT_CODE_ARB_LOST_GC_RECV_ACK 0x78
+#define STAT_CODE_PERIP_DAT_RECV_ACK 0x80
+#define STAT_CODE_PERIP_DAT_RECV_NACK 0x88
+#define STAT_CODE_GC_DAT_RECV_ACK 0x90
+#define STAT_CODE_GC_DAT_RECV_NACK 0x98
+#define STAT_CODE_PERIP_STOP_REPEAT_START 0xA0
+//Peripheral Transmitter Mode
+#define STAT_CODE_SLA_R_RECV_ACK 0xA8
+#define STAT_CODE_ARB_LOST_SLA_R_RECV_ACK 0xB0
+#define STAT_CODE_PERIP_DAT_TRANS_ACK 0xB8
+#define STAT_CODE_PERIP_DAT_TRANS_NACK 0xC0
+#define STAT_CODE_PERIP_LAST_DAT_ACK 0xC8
+//Miscellaneious
+#define STAT_CODE_NO_RELEVANT_STATE_INFO 0xF8
+#define STAT_CODE_BUS_ERROR 0x00
+
 typedef struct i2c i2c_t;
 
 /**
@@ -25,6 +59,8 @@ typedef enum {
  */
 enum {
 	NUM_I2CS = 2
+	// Number of peripherals per I2C
+	NUM_PERIPHS = 4
 };
 
 

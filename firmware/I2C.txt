@@ -1,0 +1,33 @@
+I2C Design:
+
+i2c.c implements the common i2c funtions that a user may want to invoke.  It does this by exposing an API and then calling the HAL layer API (platform_i2c.c)  This level should not directly interact with i2c peripherals, including their status codes, data registers, configuration registers, or interrupts.  It should call platform_i2c.c functions to carry those actions out as per the specific hardware platform.  As a guide for developers, if you are reading the microcontroller's datasheet, it probably shouldn't be in here!  If you are reading the I2C specifications, it should probably be in here.
+
+Common I2C functions are:
+ - I2C initialization
+ - I2C configuration
+   - Peripheral address(es)
+   - Peripheral address mask(s)
+   - SCL high and low duty cycles
+ - Controller transmit
+ - Controller receive
+ - Peripheral transmit
+   - this is only relevant if there is an I2C read on Peripheral receive
+ - Peripheral receive
+   - this is an interrupt handler
+ - Monitor mode
+
+platform_i2c.c implements the hardware level specific parts of I2C (e.g. handling the pins, registers, interrupts, etc.) and providing a HAL API for i2c.c.
+
+Common platform functions are:
+ - Set/clear acknowledge
+ - Set interrupt (enable/disable)
+ - Send STOP (e.g. leave Controller mode and enter Peripheral mode)
+ - Send START/Repeated START (e.g. leave Peripheral mode and enter Controller mode)
+ - Clear START
+ - Set interface state (enable/disable)
+ - write byte
+ - read byte
+ - set peripheral address(es)
+ - set SCL high and low dudy cycles
+ - set monitor mode
+ - set peripheral address mask(s)

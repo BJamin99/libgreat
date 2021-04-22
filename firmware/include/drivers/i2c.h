@@ -27,10 +27,18 @@ typedef struct i2c {
 	// The size of the buffer to be allocated for buffered reads/writes.
 	// If this is set to 0, only synchronous reads and writes are supported.
 	size_t buffer_size;
-
+	
+	// PERIPHERAL ADDRESSES
+	// Currently peripheral addresses must be specifed as part of initialization.
+	// While this isn't flexible, it currently seems reasonable.
+	//
+	// number of peripheral addresses
+	size_t num_perip_address;
+	// array of peripheral addresses
+    uint8_t *perip_address;
 
 	/**
-	 * Private fields -- for driver use only. :)
+	 * Private fields -- for platform driver use only. :)
 	 */
 
 	// I2C registers.

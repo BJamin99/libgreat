@@ -65,15 +65,16 @@ int i2c_init(i2c_t *i2c)
 		if (rc) {
 			return rc;
 		}
-
 	}
-
+	
 	return 0;
 }
 
+int i2c_set_perip_addr(i2c_t *i2c, uint8_t 
 
 void i2c_data_ready_interrupt(i2c_t *i2c)
 {
+	// FIXME reg is for platform code use only.  This should call a platform function.
 	uint8_t rx_data = i2c->reg->data_buffer;
 	ringbuffer_enqueue_overwrite(&i2c->rx_buffer, rx_data);
 }
@@ -87,11 +88,13 @@ void i2c_interrupt(i2c_t *i2c)
 {
 	// If there are no I2C interrupts pending, there's nothing to do.
 	// Return early.
+	// FIXME reg is for platform code use only.  This should call a platform function.
 	if (i2c->reg->status = 0xf8) {
 		return;
 	}
 
 	// If this is a "new data received" event, handle it.
+	// FIXME reg is for platform code use only.  This should call a platform function.
 	if(i2c->reg->status == IRQ_RECEIVE_DATA_AVAILABLE) {
 		i2c_data_ready_interrupt(i2c);
 	}
@@ -158,6 +161,7 @@ int i2c_controller_transmit(i2c_t *i2c, uint8_t address, )
     address = address << 1
 
 	// Enter Controller Transmitter mode; the control register I2EN bit needs to be set
+	// FIXME reg is for platform code use only.  This should call a platform function.
 	&i2c->reg->i2c_enable = true;
 
 
