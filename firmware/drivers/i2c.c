@@ -138,10 +138,27 @@ size_t i2c_read(i2c_t *i2c, void *buffer, size_t count)
 
 
 /**
- * Perform a I2C transmit, but block until the transmission is accepted.
+ * Perform a I2C controller transmit.
+ * 
+ * i2c is the i2c object to use
+ * address is the 7-bit peripheral address (<=127)
+ *
  */
-void i2c_transmit_synchronous(i2c_t *i2c, uint8_t byte)
+int i2c_controller_transmit(i2c_t *i2c, uint8_t address, )
 {
-	while(!i2c->reg->transmit_holding_register_empty);
-	i2c->reg->data = byte;
+	if (!i2c) {
+		return ENODEV;
+	}
+
+	if (address > 127) {
+		return ENXIO;
+	}
+    
+    // Shift address leaving LSB W/R bit unset to signal a write
+    address = address << 1
+
+	// Enter Controller Transmitter mode; the control register I2EN bit needs to be set
+	&i2c->reg->i2c_enable = true;
+
+
 }

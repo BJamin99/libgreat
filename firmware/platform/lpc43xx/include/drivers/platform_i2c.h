@@ -33,22 +33,107 @@ enum {
  */
 typedef volatile struct ATTR_PACKED {
 
-	uint32_t control_set;
-	uint32_t status;
-	uint32_t data;
-	uint32_t peripheral_address_0;
-	uint32_t duty_cycle_high_half_word;
-	uint32_t duty_cycle_low_half_word;
-	uint32_t control_clear;
-	uint32_t monitor_mode_control;
-	uint32_t peripheral_address_1;
-	uint32_t peripheral_address_2;
-	uint32_t peripheral_address_3;
-	uint32_t data_buffer
-	uint32_t peripheral_address_mask_0;
-	uint32_t peripheral_address_mask_1;
-	uint32_t peripheral_address_mask_2;
-	uint32_t peripheral_address_mask_3;
+	//uint32_t control_set;
+	struct {
+		uint32_t                : 2;
+		uint32_t assert_ack     : 1;
+		uint32_t interrupt      : 1;
+		uint32_t stop           : 1;
+		uint32_t start          : 1;
+        uint32_t i2c_enable     : 1;
+        uint32_t                : 25
+	};
+	//uint32_t status;
+	struct {
+		uint32_t                : 3;
+		uint32_t status         : 5;
+		uint32_t                : 24
+	};
+	//uint32_t data;
+	struct {
+		uint32_t data           : 8;
+		uint32_t                : 24
+	};
+	//uint32_t peripheral_address_0;
+	struct {
+		uint32_t general_call_0 : 1;
+		uint32_t address_0      : 7;
+		uint32_t                : 24
+	};
+	//uint32_t duty_cycle_high_half_word;
+   	struct {
+   		uint32_t duty_cycle_high_half_word : 16;
+   		uint32_t                           : 16
+   	};
+	//uint32_t duty_cycle_low_half_word;
+   	struct {
+   		uint32_t duty_cycle_low_half_word  : 16;
+   		uint32_t                           : 16
+   	};
+	//uint32_t control_clear;
+	struct {
+		uint32_t                : 2;
+		uint32_t assert_ack_clr : 1;
+		uint32_t interrupt_clr  : 1;
+		uint32_t                : 1;
+		uint32_t start_clr      : 1;
+        uint32_t i2c_disable    : 1;
+        uint32_t                : 25
+	};
+	//uint32_t monitor_mode_control;
+	struct {
+		uint32_t monitor_mode_enable : 1;
+		uint32_t scl_output_enable   : 1;
+		uint32_t interrupt_match     : 1;
+		uint32_t                     : 29
+	};
+	//uint32_t peripheral_address_1;
+	struct {
+		uint32_t general_call_1 : 1;
+		uint32_t address_1      : 7;
+		uint32_t                : 24
+	};
+	//uint32_t peripheral_address_2;
+	struct {
+		uint32_t general_call_2 : 1;
+		uint32_t address_2      : 7;
+		uint32_t                : 24
+	};
+	//uint32_t peripheral_address_3;
+	struct {
+		uint32_t general_call_3 : 1;
+		uint32_t address_3      : 7;
+		uint32_t                : 24
+	};
+	//uint32_t data_buffer
+	struct {
+		uint32_t data_buffer    : 8;
+		uint32_t                : 24
+	};
+	//uint32_t peripheral_address_mask_0;
+	struct {
+		uint32_t                : 1;
+		uint32_t address_mask_0 : 7;
+		uint32_t                : 24
+	};
+	//uint32_t peripheral_address_mask_1;
+	struct {
+		uint32_t                : 1;
+		uint32_t address_mask_1 : 7;
+		uint32_t                : 24
+	};
+	//uint32_t peripheral_address_mask_2;
+	struct {
+		uint32_t                : 1;
+		uint32_t address_mask_2 : 7;
+		uint32_t                : 24
+	};
+	//uint32_t peripheral_address_mask_3;
+	struct {
+		uint32_t                : 1;
+		uint32_t address_mask_3 : 7;
+		uint32_t                : 24
+	};
 
 } platform_i2c_registers_t;
 
