@@ -15,7 +15,7 @@
 // Stores a reference to each active I2C object.
 // Used to grab the relevant I2C object for its interrupt.
 //
-i2c_t *active_i2c_objects[2];
+i2c_t *active_i2c_objects[NUM_I2CS];
 
 
 typedef struct {
@@ -162,6 +162,80 @@ int platform_i2c_set_up_interrupt(i2c_t *i2c)
 	return 0;
 }
 
+uint32_t platform_i2c_turn_on_ack(i2c_t *i2c) {
+	// turn on ack
+	return 0;
+}
+
+uint32_t platform_i2c_turn_off_ack(i2c_t *i2c) {
+	//turn off ack
+	return 0;
+}
+
+uint32_t platform_i2c_turn_on_interrupt(i2c_t *i2c) {
+	//turn on interrupt
+	return 0;
+}
+
+uint32_t platform_i2c_turn_off_interrupt(i2c_t *i2c) {
+	//turn off interrupt
+	return 0;
+}
+
+uint32_t platform_i2c_stop_controller(i2c_t *i2c) {
+	//send stop
+	return 0;
+}
+
+// issues a start condition to enter controller mode.
+// if restart is true and the interface is already in controller mode,
+// issues a stop and then a start.  Otherwise a repeated start is issued
+uint32_t platform_i2c_start_controller(i2c_t *i2c, bool restart) {
+	//start/repeated start
+	return 0;
+}
+
+uint32_t platform_i2c_enable(i2c_t *i2c) {
+	//enable interface
+	return 0;
+}
+
+uint32_t platform_i2c_disable(i2c_t *i2c) {
+	//disable interface
+	return 0;
+}
+
+uint32_t platform_i2c_write_byte(i2c_t *i2c, uint32_t byte) {
+    return 0;
+}
+
+uint32_t platform_i2c_read_byte(i2c_t *i2c, uint32_t *byte) {
+	return 0;
+}
+
+uint32_t platform_i2c_set_7bit_address(i2c_t *i2c, uint32_t perip_num, uint8_t address) {
+    return 0;
+}
+
+uint32_t platform_i2c_set_7bit_addres_mask(i2c_t *i2c, uint32_t perip_num, uint8_t mask) {
+	return 0;
+}
+
+uint32_t platform_i2c_set_scl_high_duty_cycle(i2c_t *i2c, uint32_t duty) {
+	return 0;
+}
+
+uint32_t platform_i2c_set_scl_low_duty_cycle(i2c_t *i2c, uint32_t duty) {
+	return 0;
+}
+
+uint32_t platform_i2c_monitor_mode_enable(i2c_t *i2c) {
+	return 0;
+}
+
+uint32_t platform_i2c_monitor_mode_disable(i2c_t *i2c) {
+	return 0;
+}
 
 /**
  * @return the frequency of the clock driving this I2C, in Hz
