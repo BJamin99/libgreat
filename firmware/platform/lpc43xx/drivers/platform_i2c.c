@@ -164,26 +164,53 @@ int platform_i2c_set_up_interrupt(i2c_t *i2c)
 
 uint32_t platform_i2c_turn_on_ack(i2c_t *i2c) {
 	// turn on ack
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->assert_ack = 1;
+
 	return 0;
 }
 
 uint32_t platform_i2c_turn_off_ack(i2c_t *i2c) {
 	//turn off ack
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->assert_ack_clr = 1;
+	
 	return 0;
 }
 
 uint32_t platform_i2c_turn_on_interrupt(i2c_t *i2c) {
 	//turn on interrupt
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->interrupt = 1;
+
 	return 0;
 }
 
 uint32_t platform_i2c_turn_off_interrupt(i2c_t *i2c) {
 	//turn off interrupt
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->interrupt_clr = 1;
+
 	return 0;
 }
 
 uint32_t platform_i2c_stop_controller(i2c_t *i2c) {
 	//send stop
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	//ensure STA is cleared, else a "restart" is performed
+	i2c->reg->start_clr = 1;
+	i2c->reg->stop = 1;
+
 	return 0;
 }
 
@@ -192,48 +219,132 @@ uint32_t platform_i2c_stop_controller(i2c_t *i2c) {
 // issues a stop and then a start.  Otherwise a repeated start is issued
 uint32_t platform_i2c_start_controller(i2c_t *i2c, bool restart) {
 	//start/repeated start
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	if(i2c->reg->start && restart) {
+		i2c->reg->stop = 1;
+	}
+	else {
+		i2c->reg->start = 1;
+	}
 	return 0;
 }
 
 uint32_t platform_i2c_enable(i2c_t *i2c) {
 	//enable interface
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->i2c_enable = 1;
+	
 	return 0;
 }
 
 uint32_t platform_i2c_disable(i2c_t *i2c) {
 	//disable interface
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->i2c_enable_clr = 1;
+
 	return 0;
 }
 
-uint32_t platform_i2c_write_byte(i2c_t *i2c, uint32_t byte) {
-    return 0;
-}
-
-uint32_t platform_i2c_read_byte(i2c_t *i2c, uint32_t *byte) {
+uint32_t platform_i2c_write_byte(i2c_t *i2c, uint8_t byte) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->data = byte;
+    
 	return 0;
 }
 
-uint32_t platform_i2c_set_7bit_address(i2c_t *i2c, uint32_t perip_num, uint8_t address) {
+uint32_t platform_i2c_read_byte(i2c_t *i2c, uint8_t *byte) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	&byte = (uint8_t)i2c->reg->data_buffer;
+
+	return 0;
+}
+
+uint32_t platform_i2c_set_7bit_address(i2c_t *i2c, uint32_t perip_num, uint8_t address, bool gc) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	
+	if (address > 127) {
+		return EINVAL;
+	}
+	
+	switch(perip_num) {
+		case 0: i2c->reg->address_0 = address; i2c->reg->general_call_0 = gc; break;
+		case 1: i2c->reg->address_1 = address; i2c->reg->general_call_1 = gc; break;
+		case 2: i2c->reg->address_2 = address; i2c->reg->general_call_2 = gc; break;
+		case 3: i2c->reg->address_3 = address; i2c->reg->general_call_3 = gc; break;
+		default: return EINVAL;
+	}
+
     return 0;
 }
 
 uint32_t platform_i2c_set_7bit_addres_mask(i2c_t *i2c, uint32_t perip_num, uint8_t mask) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	
+	if (mask > 127) {
+		return EINVAL;
+	}
+	
+	switch(perip_num) {
+		case 0: i2c->reg->address_mask_0 = mask; break;
+		case 1: i2c->reg->address_mask_1 = mask; break;
+		case 2: i2c->reg->address_mask_2 = mask; break;
+		case 3: i2c->reg->address_mask_3 = mask; break;
+		default: return EINVAL;
+	}
 	return 0;
 }
 
-uint32_t platform_i2c_set_scl_high_duty_cycle(i2c_t *i2c, uint32_t duty) {
+uint32_t platform_i2c_set_scl_high_duty_cycle(i2c_t *i2c, uint16_t duty) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->duty_cycle_high_half_word = duty;
+
 	return 0;
 }
 
-uint32_t platform_i2c_set_scl_low_duty_cycle(i2c_t *i2c, uint32_t duty) {
+uint32_t platform_i2c_set_scl_low_duty_cycle(i2c_t *i2c, uint16_t duty) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->duty_cycle_low_half_word = duty;
+
 	return 0;
 }
 
-uint32_t platform_i2c_monitor_mode_enable(i2c_t *i2c) {
+// scl_enable allows for clock line stretching (true), or no scl control (false)
+// match allows monitoring only set addresses (false), or all traffic (true)
+uint32_t platform_i2c_monitor_mode_enable(i2c_t *i2c, bool scl_enable, bool match) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->monitor_mode_enable = 1;
+	i2c->reg->scl_output_enable = scl_enable;
+	i2c->reg->interrupt_match = match;
+
 	return 0;
 }
 
 uint32_t platform_i2c_monitor_mode_disable(i2c_t *i2c) {
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->monitor_mode_enable = 0;
+	
 	return 0;
 }
 
