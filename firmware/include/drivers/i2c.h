@@ -36,7 +36,9 @@ typedef struct i2c {
 	size_t num_perip_address;
 	// array of peripheral addresses
     uint8_t *perip_address;
-
+    // default byte to tx if no data in tx_buffer when read received
+    // TODO make a perip struct that contains address/general call/and default data.
+    uint8_t perip_default_tx_data = 0x00;
 	/**
 	 * Private fields -- for platform driver use only. :)
 	 */
@@ -48,10 +50,55 @@ typedef struct i2c {
 	platform_i2c_t platform_data;
 
 	// Pointer to a ringbuffer used for asynchronous reads and writes.
-	// May be null if only synchronous reads and writes are supported.
+	// TODO may need to setup separate buffers for the controller and each peripheral
+	// TODO may need variable to store the current target address for the controller
+	//		(e.g. in case of arbitration lost and/or repeated start)
 	ringbuffer_t rx_buffer;
 	ringbuffer_t tx_buffer;
 
+	// For Controller reads, need to know how many more bytes to read
+	size_t rx_len;
+
+} i2c_t;
+
+// I2C generic status codes; platform interrupt routines need to translate platform
+// specific status/state codes to libgreat generic status/state codes
+// (e.g. for interrupt handling).  These are based off the LPC43xx.
+typedef enum {
+	//Controller Transmitter Mode
+	START_TRANS
+	REPEAT_START_TRANS
+	SLA_W_TRANS_ACK
+	SLA_W_TRANS_NACK
+	CTRL_DAT_TRANS_ACK
+	CTRL_DAT_TRANS_NACK
+	//Controller Transmitter/Receiver Mode
+	ARB_LOST
+	//Controller Receiver Mode
+	SLA_R_TRANS_ACK
+	SLA_R_TRANS_NACK
+	CTRL_DAT_RECV_ACK
+	CTRL_DAT_RECV_NACK
+	//Peripheral Receiver Mode
+	SLA_W_RECV_ACK
+	ARB_LOST_SLA_W_RECV_ACK
+	GC_RECV_ACK
+	ARB_LOST_GC_RECV_ACK
+	PERIP_DAT_RECV_ACK
+	PERIP_DAT_RECV_NACK
+	GC_DAT_RECV_ACK
+	GC_DAT_RECV_NACK
+	PERIP_STOP_REPEAT_START
+	//Peripheral Transmitter Mode
+	SLA_R_RECV_ACK
+	ARB_LOST_SLA_R_RECV_ACK
+	PERIP_DAT_TRANS_ACK
+	PERIP_DAT_TRANS_NACK
+	PERIP_LAST_DAT_ACK
+	//Miscellaneious
+	NO_RELEVANT_STATE_INFO
+	BUS_ERROR
+	UNKNOWN_STAT_CODE
 } i2c_t;
 
 /**

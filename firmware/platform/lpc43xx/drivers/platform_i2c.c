@@ -133,7 +133,45 @@ static void platform_i2c1_interrupt(void)
 	i2c_interrupt(active_i2c_objects[1]);
 }
 
-
+i2c_stat_code platform_i2c_get_stat(i2c *i2c)
+{
+	switch(&i2c->reg->status) {
+		//Controller Transmitter Mode
+		case STAT_CODE_START_TRANS: return i2c_stat_code.START_TRANS;
+		case STAT_CODE_REPEAT_START_TRANS: return i2c_stat_code.REPEAT_START_TRANS;
+		case STAT_CODE_SLA_W_TRANS_ACK: return i2c_stat_code.SLA_W_TRANS_ACK;
+		case STAT_CODE_SLA_W_TRANS_NACK: return i2c_stat_code.SLA_W_TRANS_NACK;
+		case STAT_CODE_CTRL_DAT_TRANS_ACK: return i2c_stat_code.CTRL_DAT_TRANS_ACK;
+		case STAT_CODE_CTRL_DAT_TRANS_NACK: return i2c_stat_code.CTRL_DAT_TRANS_NACK;
+		//Controller Transmitter/Receiver Mode
+		case STAT_CODE_ARB_LOST: return i2c_stat_code.ARB_LOST;
+		//Controller Receiver Mode
+		case STAT_CODE_SLA_R_TRANS_ACK: return i2c_stat_code.SLA_R_TRANS_ACK;
+		case STAT_CODE_SLA_R_TRANS_NACK: return i2c_stat_code.SLA_R_TRANS_NACK;
+		case STAT_CODE_CTRL_DAT_RECV_ACK: return i2c_stat_code.CTRL_DAT_RECV_ACK;
+		case STAT_CODE_CTRL_DAT_RECV_NACK: return i2c_stat_code.CTRL_DAT_RECV_NACK;
+		//Peripheral Receiver Mode
+		case STAT_CODE_SLA_W_RECV_ACK: return i2c_stat_code.SLA_W_RECV_ACK;
+		case STAT_CODE_ARB_LOST_SLA_W_RECV_ACK: return i2c_stat_code.ARB_LOST_SLA_W_RECV_ACK;
+		case STAT_CODE_GC_RECV_ACK: return i2c_stat_code.GC_RECV_ACK;
+		case STAT_CODE_ARB_LOST_GC_RECV_ACK: return i2c_stat_code.ARB_LOST_GC_RECV_ACK;
+		case STAT_CODE_PERIP_DAT_RECV_ACK: return i2c_stat_code.PERIP_DAT_RECV_ACK;
+		case STAT_CODE_PERIP_DAT_RECV_NACK: return i2c_stat_code.PERIP_DAT_RECV_NACK;
+		case STAT_CODE_GC_DAT_RECV_ACK: return i2c_stat_code.GC_DAT_RECV_ACK;
+		case STAT_CODE_GC_DAT_RECV_NACK: return i2c_stat_code.GC_DAT_RECV_NACK;
+		case STAT_CODE_PERIP_STOP_REPEAT_START: return i2c_stat_code.PERIP_STOP_REPEAT_START;
+		//Peripheral Transmitter Mode
+		case STAT_CODE_SLA_R_RECV_ACK: return i2c_stat_code.SLA_R_RECV_ACK;
+		case STAT_CODE_ARB_LOST_SLA_R_RECV_ACK: return i2c_stat_code.ARB_LOST_SLA_R_RECV_ACK;
+		case STAT_CODE_PERIP_DAT_TRANS_ACK: return i2c_stat_code.PERIP_DAT_TRANS_ACK;
+		case STAT_CODE_PERIP_DAT_TRANS_NACK: return i2c_stat_code.PERIP_DAT_TRANS_NACK;
+		case STAT_CODE_PERIP_LAST_DAT_ACK: return i2c_stat_code.PERIP_LAST_DAT_ACK;
+		//Miscellaneious
+		case STAT_CODE_NO_RELEVANT_STATE_INFO: return i2c_stat_code.NO_RELEVANT_STATE_INFO;
+		case STAT_CODE_BUS_ERROR: return i2c_stat_code.BUS_ERROR;
+		default:  return i2c_stat_code.UNKNOWN_STAT_CODE;
+	}
+}
 
 /**
  * Performs platform-specific initialization for the system's I2C interrupt.

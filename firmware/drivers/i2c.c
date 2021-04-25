@@ -65,12 +65,37 @@ int i2c_init(i2c_t *i2c)
 		if (rc) {
 			return rc;
 		}
+
+		// Check for peripheral addresses.  If there is a peripheral address, assert ack
+		if (&i2c->num_perip_address > 0) {
+			for(int i=0; i<NUM_PERIPS; i++) {
+				if (i >= &i2c->num_perip_address) {
+					rc = platform_i2c_set_7bit_address(i2c, i, &i2c->perip_address[&i2c->num_perip_address-1], false);
+					if(rc) {
+						return rc;
+					}
+				}
+
+				rc = platform_i2c_set_7bit_address(i2c, i, &i2c->perip_address[i], true);
+				if(rc) {
+					return rc;
+				}
+			}
+			rc = platform_i2c_turn_on_ack(i2c);
+			if(rc) {
+				return rc;
+			}
+		}
+	}
+
+	rc = platform_i2c_enable(i2c);
+	if(rc) {
+		return rc;
 	}
 	
 	return 0;
 }
 
-int i2c_set_perip_addr(i2c_t *i2c, uint8_t 
 
 void i2c_data_ready_interrupt(i2c_t *i2c)
 {
@@ -86,18 +111,120 @@ void i2c_data_ready_interrupt(i2c_t *i2c)
  */
 void i2c_interrupt(i2c_t *i2c)
 {
-	// If there are no I2C interrupts pending, there's nothing to do.
-	// Return early.
-	// FIXME reg is for platform code use only.  This should call a platform function.
-	if (i2c->reg->status = 0xf8) {
-		return;
+	status = platform_i2c_get_stat(i2c);
+	switch(&i2c->reg->status) {
+		//Controller States
+		case i2c_stat_code.CTRL_DAT_TRANS_ACK: 
+			if(ringbuffer_empty(&i2c->tx_buffer)){
+				platform_i2c_turn_on_ack(i2c);
+				platform_i2c_stop_controller(i2c);				
+				break;
+			}
+		case i2c_stat_code.START_TRANS: 
+		case i2c_stat_code.REPEAT_START_TRANS: 
+		//Controller Transmitter State
+		case i2c_stat_code.SLA_W_TRANS_ACK: 
+			if(ringbuffer_data_available(&i2c->tx_buffer)){
+				platform_i2c_write_byte(ringbuffer_dequeue(&i2c->txbuffer));
+				platform_i2c_turn_on_ack(i2c);
+			}
+			break;
+		case i2c_stat_code.CTRL_DAT_TRANS_NACK:
+		case i2c_stat_code.SLA_W_TRANS_NACK:
+		case i2c_stat_code.BUS_ERROR:
+		case i2c_stat_code.SLA_R_TRANS_NACK:
+			platform_i2c_turn_on_ack(i2c);
+			platform_i2c_stop_controller(i2c);
+			break;
+		//Controller Transmitter/Receiver Mode
+		case i2c_stat_code.ARB_LOST:
+			platform_i2c_turn_on_ack(i2c);
+			platform_i2c_start_controller(i2c);
+			break;
+		//Controller Receiver Mode
+		case i2c_stat_code.SLA_R_TRANS_ACK:
+			platform_i2c_turn_on_ack(i2c);
+			break;
+		case i2c_stat_code.CTRL_DAT_RECV_ACK:
+			uint8_t rx_byte;
+			platform_i2c_read_byte(i2c, &rx_byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
+			if(--i2c->rx_len == 0) {
+				platform_i2c_turn_off_ack(i2c);
+			}
+			else {
+				platform_i2c_turn_on_ack(i2c);
+			}
+			break;
+		case i2c_stat_code.CTRL_DAT_RECV_NACK: 
+			uint8_t rx_byte;
+			platform_i2c_read_byte(i2c, &rx_byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
+			platform_i2c_turn_on_ack(i2c);
+			platform_i2c_stop_controller(i2c);
+			// TODO do we need to signal data receive complete to trigger transfer to comms?
+			break;
+		//Peripheral Receiver Mode
+		case i2c_stat_code.SLA_W_RECV_ACK:
+		case i2c_stat_code.GC_RECV_ACK:
+			platform_i2c_turn_on_ack(i2c);
+			break;
+		case i2c_stat_code.ARB_LOST_SLA_W_RECV_ACK:
+		case i2c_stat_code.ARB_LOST_GC_RECV_ACK:
+			platform_i2c_start_controller(i2c);
+			platform_i2c_turn_on_ack(i2c);
+			break;
+		case i2c_stat_code.PERIP_DAT_RECV_ACK:
+			uint8_t rx_byte;
+			platform_i2c_read_byte(i2c, &rx_byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
+			if(ringbuffer_data_available(&i2c->rx_buffer) == &i2c->rx_len) {
+				platform_i2c_turn_off_ack(i2c);
+			}
+			else {
+				platform_i2c_turn_on_ack(i2c);
+			}
+			break;
+		case i2c_stat_code.PERIP_DAT_RECV_NACK:
+		case i2c_stat_code.GC_DAT_RECV_NACK:
+		case i2c_stat_code.PERIP_STOP_REPEAT_START:
+		case i2c_stat_code.PERIP_DAT_TRANS_NACK:
+		case i2c_stat_code.PERIP_LAST_DAT_ACK:
+			platform_i2c_turn_on_ack(i2c);
+			break;
+		case i2c_stat_code.GC_DAT_RECV_ACK:
+			uint8_t rx_byte;
+			platform_i2c_read_byte(i2c, &rx_byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
+			platform_i2c_turn_off_ack(i2c);
+			break;
+		//Peripheral Transmitter Mode
+		case i2c_stat_code.SLA_R_RECV_ACK:
+		case i2c_stat_code.PERIP_DAT_TRANS_ACK:
+			//We rely on host having filled peripheral buffer
+			//TODO the model here can either be rely on the peripheral buffer to be filled;
+			//     have a default "read" buffer for a perpiheral;
+			//	   or require back and forth with the host
+			uint8_t tx_byte;
+			if(ringbuffer_empty(&i2c->tx_buffer)) {
+				tx_byte = i2c->perip_default_tx_data;
+			}
+			else {
+				ringbuffer_dequeue(&i2c->tx_buffer, &tx_byte);
+			}
+			platform_i2c_write_byte(i2c, tx_byte);
+			platform_i2c_turn_on_ack(i2c);
+			break;
+		case i2c_stat_code.ARB_LOST_SLA_R_RECV_ACK: 
+			platform_i2c_turn_on_ack(i2c);
+			platform_i2c_start_controller(i2c);
+			break;
+		//Miscellaneious
+		case i2c_stat_code.NO_RELEVANT_STATE_INFO:
+		case i2c_stat_code.UNKNOWN_STAT_CODE:
+		default:
 	}
-
-	// If this is a "new data received" event, handle it.
-	// FIXME reg is for platform code use only.  This should call a platform function.
-	if(i2c->reg->status == IRQ_RECEIVE_DATA_AVAILABLE) {
-		i2c_data_ready_interrupt(i2c);
-	}
+	platform_i2c_turn_off_interrupt(i2c);
 }
 
 
@@ -147,7 +274,7 @@ size_t i2c_read(i2c_t *i2c, void *buffer, size_t count)
  * address is the 7-bit peripheral address (<=127)
  *
  */
-int i2c_controller_transmit(i2c_t *i2c, uint8_t address, )
+int i2c_controller_transmit(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data)
 {
 	if (!i2c) {
 		return ENODEV;
@@ -156,13 +283,23 @@ int i2c_controller_transmit(i2c_t *i2c, uint8_t address, )
 	if (address > 127) {
 		return ENXIO;
 	}
+
+	if (data_len > (&i2c->tx_buffer->size - ringbuffer_data_available(&i2c->tx_buffer))) {
+		return ENOMEM;
+	}
     
     // Shift address leaving LSB W/R bit unset to signal a write
     address = address << 1
 
-	// Enter Controller Transmitter mode; the control register I2EN bit needs to be set
-	// FIXME reg is for platform code use only.  This should call a platform function.
-	&i2c->reg->i2c_enable = true;
+	// Load address plus data into tx ring buffer
+	ringbuffer_enqueue(&i2c->tx_buffer, address);
+	for(int i=0; i<data_len; i++) {
+		ringbuffer_enqueue(&i2c->tx_buffer, data[i]);
+	}
 
-
+	// Trigger a start condition to initiate master controller mode
+	// data transmission done through interrupt handler
+	platform_i2c_start_controller(i2c);
+	while(!ringbuffer_data_available(&i2c->tx_buffer));
+	return 0;
 }

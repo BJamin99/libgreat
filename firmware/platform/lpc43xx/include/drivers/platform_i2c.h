@@ -49,6 +49,11 @@
 #define STAT_CODE_NO_RELEVANT_STATE_INFO 0xF8 >> 3
 #define STAT_CODE_BUS_ERROR 0x00
 
+// I2C generic status codes; platform interrupt routines need to translate platform
+// specific status/state codes to libgreat generic status/state codes
+// (e.g. for interrupt handling).  This is defined in i2c.h
+typedef enum i2c_stat_code i2c_stat_code_t;
+
 typedef struct i2c i2c_t;
 
 /**
