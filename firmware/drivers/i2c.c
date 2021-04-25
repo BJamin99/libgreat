@@ -14,11 +14,6 @@
 #include <drivers/i2c.h>
 #include <drivers/arm_system_control.h>
 
-typedef enum {
-	IRQ_RECEIVE_DATA_AVAILABLE = 0x2,
-} pending_interrupt_t;
-
-
 // FIXME HACK: statically allocate I2C buffers
 static uint8_t i2c_rx_buffer[256];
 static uint8_t i2c_tx_buffer[256];
@@ -95,15 +90,6 @@ int i2c_init(i2c_t *i2c)
 	
 	return 0;
 }
-
-
-void i2c_data_ready_interrupt(i2c_t *i2c)
-{
-	// FIXME reg is for platform code use only.  This should call a platform function.
-	uint8_t rx_data = i2c->reg->data_buffer;
-	ringbuffer_enqueue_overwrite(&i2c->rx_buffer, rx_data);
-}
-
 
 
 /**
@@ -268,13 +254,13 @@ size_t i2c_read(i2c_t *i2c, void *buffer, size_t count)
 
 
 /**
- * Perform a I2C controller transmit.
+ * Perform an I2C controller write.
  * 
  * i2c is the i2c object to use
  * address is the 7-bit peripheral address (<=127)
  *
  */
-int i2c_controller_transmit(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data)
+int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data)
 {
 	if (!i2c) {
 		return ENODEV;
@@ -303,3 +289,50 @@ int i2c_controller_transmit(i2c_t *i2c, uint8_t address, size_t data_len, uint8_
 	while(!ringbuffer_data_available(&i2c->tx_buffer));
 	return 0;
 }
+
+/**
+ * Perform an I2C controller read.
+ * 
+ * i2c is the i2c object to use
+ * address is the 7-bit peripheral address (<=127)
+ *
+ */
+int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data)
+{
+	if (!i2c) {
+		return ENODEV;
+	}
+
+	if (address > 127) {
+		return ENXIO;
+	}
+
+	if (data_len > (&i2c->rx_buffer->size - ringbuffer_data_available(&i2c->rx_buffer))) {
+		return ENOMEM;
+	}
+    
+    // Shift address leaving LSB W/R bit set to signal a read
+    address = address << 1 || 0x01
+
+    // Load address into the tx_buffer (this is where the interrupt will grab it).
+    ringbuffer_enqueue(&i2c->tx_buffer, address);
+
+	// Trigger a start condition to initiate master controller mode
+	// data transmission/reception done through interrupt handler
+	platform_i2c_start_controller(i2c);
+	while(!ringbuffer_data_available(&i2c->tx_buffer));
+
+	// Remove data from rx ring buffer
+	for(int i=0; i<data_len; i++) {
+		ringbuffer_dequeue(&i2c->rx_buffer, &data[i]);
+	}
+
+	return 0;
+}
+
+
+ //TODO i2c_peripheral_load_tx_buffer
+ //TODO i2c_peripheral_read_rx_buffer
+ //TODO i2c_monitor_mode_start
+ //TODO i2c_monitor_mode_read_rx_buffer
+ //TODO i2c_monitor_mode_stop
