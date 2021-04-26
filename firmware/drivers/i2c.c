@@ -224,6 +224,7 @@ void i2c_interrupt(i2c_t *i2c)
  *              your buffer.
  * @return The total number of bytes read.
  */
+// TODO this is a leftover from using UART as the base for I2C.  Shouldn't be needed.
 size_t i2c_read(i2c_t *i2c, void *buffer, size_t count)
 {
 	uint8_t *byte_buffer = buffer;
@@ -319,8 +320,10 @@ int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *d
 
 	// Trigger a start condition to initiate master controller mode
 	// data transmission/reception done through interrupt handler
+	// TODO remove potential for infinite loop (e.g. timeout?)
+	// TODO perhaps need some flags/signals from interrupts?
 	platform_i2c_start_controller(i2c);
-	while(!ringbuffer_data_available(&i2c->tx_buffer));
+	while(!ringbuffer_data_available(&i2c->rx_buffer));
 
 	// Remove data from rx ring buffer
 	for(int i=0; i<data_len; i++) {
@@ -330,9 +333,32 @@ int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *d
 	return 0;
 }
 
+ // i2c_monitor_mode_start
+int i2c_monitor_mode_start(i2c_t *i2c, bool scl_enable, bool match_all) {
+	return platform_i2c_monitor_mode_enable(i2c, scl_enable, match_all);
+}
+
+ // i2c_monitor_mode_read_rx_buffer
+int i2c_monitor_mode_read_rx_buffer(i2c_t *i2c, size_t data_len, uint8_t *data, size_t *actual_len) {
+	if (!i2c) {
+		return ENODEV;
+	}
+
+	// Remove data from rx ring buffer
+	int i;
+	size_t avail_data = ringbuffer_data_avaiable(&i2c->rx_buffer);
+	for(i = 0; i<data_len && i<avail_data; i++) {
+		ringbuffer_dequeue(&i2c->rx_buffer, &data[i]);
+	}
+	*actual_len = i;
+
+	return 0;
+}
+
+ // i2c_monitor_mode_stop
+int i2c_monitor_mode_stop(i2c_t *i2c) {
+	return platform_i2c_monitor_mode_disable(i2c);
+}
 
  //TODO i2c_peripheral_load_tx_buffer
  //TODO i2c_peripheral_read_rx_buffer
- //TODO i2c_monitor_mode_start
- //TODO i2c_monitor_mode_read_rx_buffer
- //TODO i2c_monitor_mode_stop
