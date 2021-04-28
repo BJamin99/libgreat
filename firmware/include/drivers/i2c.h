@@ -38,7 +38,7 @@ typedef struct i2c {
     uint8_t *perip_address;
     // default byte to tx if no data in tx_buffer when read received
     // TODO make a perip struct that contains address/general call/and default data.
-    uint8_t perip_default_tx_data = 0x00;
+    uint8_t perip_default_tx_data;
 	/**
 	 * Private fields -- for platform driver use only. :)
 	 */
@@ -64,42 +64,42 @@ typedef struct i2c {
 // I2C generic status codes; platform interrupt routines need to translate platform
 // specific status/state codes to libgreat generic status/state codes
 // (e.g. for interrupt handling).  These are based off the LPC43xx.
-typedef enum {
+typedef enum i2c_stat_code {
 	//Controller Transmitter Mode
-	START_TRANS
-	REPEAT_START_TRANS
-	SLA_W_TRANS_ACK
-	SLA_W_TRANS_NACK
-	CTRL_DAT_TRANS_ACK
-	CTRL_DAT_TRANS_NACK
+	START_TRANS,
+	REPEAT_START_TRANS,
+	SLA_W_TRANS_ACK,
+	SLA_W_TRANS_NACK,
+	CTRL_DAT_TRANS_ACK,
+	CTRL_DAT_TRANS_NACK,
 	//Controller Transmitter/Receiver Mode
-	ARB_LOST
+	ARB_LOST,
 	//Controller Receiver Mode
-	SLA_R_TRANS_ACK
-	SLA_R_TRANS_NACK
-	CTRL_DAT_RECV_ACK
-	CTRL_DAT_RECV_NACK
+	SLA_R_TRANS_ACK,
+	SLA_R_TRANS_NACK,
+	CTRL_DAT_RECV_ACK,
+	CTRL_DAT_RECV_NACK,
 	//Peripheral Receiver Mode
-	SLA_W_RECV_ACK
-	ARB_LOST_SLA_W_RECV_ACK
-	GC_RECV_ACK
-	ARB_LOST_GC_RECV_ACK
-	PERIP_DAT_RECV_ACK
-	PERIP_DAT_RECV_NACK
-	GC_DAT_RECV_ACK
-	GC_DAT_RECV_NACK
-	PERIP_STOP_REPEAT_START
+	SLA_W_RECV_ACK,
+	ARB_LOST_SLA_W_RECV_ACK,
+	GC_RECV_ACK,
+	ARB_LOST_GC_RECV_ACK,
+	PERIP_DAT_RECV_ACK,
+	PERIP_DAT_RECV_NACK,
+	GC_DAT_RECV_ACK,
+	GC_DAT_RECV_NACK,
+	PERIP_STOP_REPEAT_START,
 	//Peripheral Transmitter Mode
-	SLA_R_RECV_ACK
-	ARB_LOST_SLA_R_RECV_ACK
-	PERIP_DAT_TRANS_ACK
-	PERIP_DAT_TRANS_NACK
-	PERIP_LAST_DAT_ACK
+	SLA_R_RECV_ACK,
+	ARB_LOST_SLA_R_RECV_ACK,
+	PERIP_DAT_TRANS_ACK,
+	PERIP_DAT_TRANS_NACK,
+	PERIP_LAST_DAT_ACK,
 	//Miscellaneious
-	NO_RELEVANT_STATE_INFO
-	BUS_ERROR
+	NO_RELEVANT_STATE_INFO,
+	BUS_ERROR,
 	UNKNOWN_STAT_CODE
-} i2c_t;
+} i2c_stat_code_t;
 
 /**
  * I2C implementation functions.

@@ -97,7 +97,7 @@ int i2c_init(i2c_t *i2c)
  */
 void i2c_interrupt(i2c_t *i2c)
 {
-	status = platform_i2c_get_stat(i2c);
+	i2c_stat_code status = platform_i2c_get_stat(i2c);
 	switch(&i2c->reg->status) {
 		//Controller States
 		case i2c_stat_code.CTRL_DAT_TRANS_ACK: 
