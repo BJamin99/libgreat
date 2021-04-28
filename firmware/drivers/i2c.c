@@ -62,16 +62,16 @@ int i2c_init(i2c_t *i2c)
 		}
 
 		// Check for peripheral addresses.  If there is a peripheral address, assert ack
-		if (&i2c->num_perip_address > 0) {
-			for(int i=0; i<NUM_PERIPS; i++) {
-				if (i >= &i2c->num_perip_address) {
-					rc = platform_i2c_set_7bit_address(i2c, i, &i2c->perip_address[&i2c->num_perip_address-1], false);
+		if (i2c->num_perip_address > 0) {
+			for(uint32_t i=0; i<NUM_PERIPHS; i++) {
+				if (i >= i2c->num_perip_address) {
+					rc = platform_i2c_set_7bit_address(i2c, i, i2c->perip_address[i2c->num_perip_address-1], false);
 					if(rc) {
 						return rc;
 					}
 				}
 
-				rc = platform_i2c_set_7bit_address(i2c, i, &i2c->perip_address[i], true);
+				rc = platform_i2c_set_7bit_address(i2c, i, i2c->perip_address[i], true);
 				if(rc) {
 					return rc;
 				}
@@ -97,44 +97,44 @@ int i2c_init(i2c_t *i2c)
  */
 void i2c_interrupt(i2c_t *i2c)
 {
-	i2c_stat_code status = platform_i2c_get_stat(i2c);
-	switch(&i2c->reg->status) {
+	uint8_t byte=0;
+	i2c_stat_code_t status = platform_i2c_get_stat(i2c);
+	switch(status) {
 		//Controller States
-		case i2c_stat_code.CTRL_DAT_TRANS_ACK: 
+		case CTRL_DAT_TRANS_ACK: 
 			if(ringbuffer_empty(&i2c->tx_buffer)){
 				platform_i2c_turn_on_ack(i2c);
 				platform_i2c_stop_controller(i2c);				
 				break;
 			}
-		case i2c_stat_code.START_TRANS: 
-		case i2c_stat_code.REPEAT_START_TRANS: 
+		case START_TRANS: 
+		case REPEAT_START_TRANS: 
 		//Controller Transmitter State
-		case i2c_stat_code.SLA_W_TRANS_ACK: 
+		case SLA_W_TRANS_ACK: 
 			if(ringbuffer_data_available(&i2c->tx_buffer)){
-				platform_i2c_write_byte(ringbuffer_dequeue(&i2c->txbuffer));
+				platform_i2c_write_byte(i2c, ringbuffer_dequeue(&i2c->tx_buffer));
 				platform_i2c_turn_on_ack(i2c);
 			}
 			break;
-		case i2c_stat_code.CTRL_DAT_TRANS_NACK:
-		case i2c_stat_code.SLA_W_TRANS_NACK:
-		case i2c_stat_code.BUS_ERROR:
-		case i2c_stat_code.SLA_R_TRANS_NACK:
+		case CTRL_DAT_TRANS_NACK:
+		case SLA_W_TRANS_NACK:
+		case BUS_ERROR:
+		case SLA_R_TRANS_NACK:
 			platform_i2c_turn_on_ack(i2c);
 			platform_i2c_stop_controller(i2c);
 			break;
 		//Controller Transmitter/Receiver Mode
-		case i2c_stat_code.ARB_LOST:
+		case ARB_LOST:
 			platform_i2c_turn_on_ack(i2c);
-			platform_i2c_start_controller(i2c);
+			platform_i2c_start_controller(i2c, false);
 			break;
 		//Controller Receiver Mode
-		case i2c_stat_code.SLA_R_TRANS_ACK:
+		case SLA_R_TRANS_ACK:
 			platform_i2c_turn_on_ack(i2c);
 			break;
-		case i2c_stat_code.CTRL_DAT_RECV_ACK:
-			uint8_t rx_byte;
-			platform_i2c_read_byte(i2c, &rx_byte);
-			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
+		case CTRL_DAT_RECV_ACK:
+			platform_i2c_read_byte(i2c, &byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, byte);
 			if(--i2c->rx_len == 0) {
 				platform_i2c_turn_off_ack(i2c);
 			}
@@ -142,73 +142,70 @@ void i2c_interrupt(i2c_t *i2c)
 				platform_i2c_turn_on_ack(i2c);
 			}
 			break;
-		case i2c_stat_code.CTRL_DAT_RECV_NACK: 
-			uint8_t rx_byte;
-			platform_i2c_read_byte(i2c, &rx_byte);
-			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
+		case CTRL_DAT_RECV_NACK: 
+			platform_i2c_read_byte(i2c, &byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, byte);
 			platform_i2c_turn_on_ack(i2c);
 			platform_i2c_stop_controller(i2c);
 			// TODO do we need to signal data receive complete to trigger transfer to comms?
 			break;
 		//Peripheral Receiver Mode
-		case i2c_stat_code.SLA_W_RECV_ACK:
-		case i2c_stat_code.GC_RECV_ACK:
+		case SLA_W_RECV_ACK:
+		case GC_RECV_ACK:
 			platform_i2c_turn_on_ack(i2c);
 			break;
-		case i2c_stat_code.ARB_LOST_SLA_W_RECV_ACK:
-		case i2c_stat_code.ARB_LOST_GC_RECV_ACK:
-			platform_i2c_start_controller(i2c);
+		case ARB_LOST_SLA_W_RECV_ACK:
+		case ARB_LOST_GC_RECV_ACK:
+			platform_i2c_start_controller(i2c, false);
 			platform_i2c_turn_on_ack(i2c);
 			break;
-		case i2c_stat_code.PERIP_DAT_RECV_ACK:
-			uint8_t rx_byte;
-			platform_i2c_read_byte(i2c, &rx_byte);
-			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
-			if(ringbuffer_data_available(&i2c->rx_buffer) == &i2c->rx_len) {
+		case PERIP_DAT_RECV_ACK:
+			platform_i2c_read_byte(i2c, &byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, byte);
+			if(ringbuffer_data_available(&i2c->rx_buffer) == i2c->rx_len) {
 				platform_i2c_turn_off_ack(i2c);
 			}
 			else {
 				platform_i2c_turn_on_ack(i2c);
 			}
 			break;
-		case i2c_stat_code.PERIP_DAT_RECV_NACK:
-		case i2c_stat_code.GC_DAT_RECV_NACK:
-		case i2c_stat_code.PERIP_STOP_REPEAT_START:
-		case i2c_stat_code.PERIP_DAT_TRANS_NACK:
-		case i2c_stat_code.PERIP_LAST_DAT_ACK:
+		case PERIP_DAT_RECV_NACK:
+		case GC_DAT_RECV_NACK:
+		case PERIP_STOP_REPEAT_START:
+		case PERIP_DAT_TRANS_NACK:
+		case PERIP_LAST_DAT_ACK:
 			platform_i2c_turn_on_ack(i2c);
 			break;
-		case i2c_stat_code.GC_DAT_RECV_ACK:
-			uint8_t rx_byte;
-			platform_i2c_read_byte(i2c, &rx_byte);
-			ringbuffer_enqueue(&i2c->rx_buffer, rx_byte);
+		case GC_DAT_RECV_ACK:
+			platform_i2c_read_byte(i2c, &byte);
+			ringbuffer_enqueue(&i2c->rx_buffer, byte);
 			platform_i2c_turn_off_ack(i2c);
 			break;
 		//Peripheral Transmitter Mode
-		case i2c_stat_code.SLA_R_RECV_ACK:
-		case i2c_stat_code.PERIP_DAT_TRANS_ACK:
+		case SLA_R_RECV_ACK:
+		case PERIP_DAT_TRANS_ACK:
 			//We rely on host having filled peripheral buffer
 			//TODO the model here can either be rely on the peripheral buffer to be filled;
 			//     have a default "read" buffer for a perpiheral;
 			//	   or require back and forth with the host
-			uint8_t tx_byte;
 			if(ringbuffer_empty(&i2c->tx_buffer)) {
-				tx_byte = i2c->perip_default_tx_data;
+				byte = i2c->perip_default_tx_data;
 			}
 			else {
-				ringbuffer_dequeue(&i2c->tx_buffer, &tx_byte);
+				byte = ringbuffer_dequeue(&i2c->tx_buffer);
 			}
-			platform_i2c_write_byte(i2c, tx_byte);
+			platform_i2c_write_byte(i2c, byte);
 			platform_i2c_turn_on_ack(i2c);
 			break;
-		case i2c_stat_code.ARB_LOST_SLA_R_RECV_ACK: 
+		case ARB_LOST_SLA_R_RECV_ACK: 
 			platform_i2c_turn_on_ack(i2c);
-			platform_i2c_start_controller(i2c);
+			platform_i2c_start_controller(i2c, false);
 			break;
 		//Miscellaneious
-		case i2c_stat_code.NO_RELEVANT_STATE_INFO:
-		case i2c_stat_code.UNKNOWN_STAT_CODE:
+		case NO_RELEVANT_STATE_INFO:
+		case UNKNOWN_STAT_CODE:
 		default:
+			break;
 	}
 	platform_i2c_turn_off_interrupt(i2c);
 }
@@ -271,22 +268,22 @@ int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *
 		return ENXIO;
 	}
 
-	if (data_len > (&i2c->tx_buffer->size - ringbuffer_data_available(&i2c->tx_buffer))) {
+	if (data_len > (i2c->tx_buffer.size - ringbuffer_data_available(&i2c->tx_buffer))) {
 		return ENOMEM;
 	}
     
     // Shift address leaving LSB W/R bit unset to signal a write
-    address = address << 1
+    address = address << 1;
 
 	// Load address plus data into tx ring buffer
 	ringbuffer_enqueue(&i2c->tx_buffer, address);
-	for(int i=0; i<data_len; i++) {
+	for(uint32_t i=0; i<data_len; i++) {
 		ringbuffer_enqueue(&i2c->tx_buffer, data[i]);
 	}
 
 	// Trigger a start condition to initiate master controller mode
 	// data transmission done through interrupt handler
-	platform_i2c_start_controller(i2c);
+	platform_i2c_start_controller(i2c, false);
 	while(!ringbuffer_data_available(&i2c->tx_buffer));
 	return 0;
 }
@@ -308,12 +305,12 @@ int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *d
 		return ENXIO;
 	}
 
-	if (data_len > (&i2c->rx_buffer->size - ringbuffer_data_available(&i2c->rx_buffer))) {
+	if (data_len > (i2c->rx_buffer.size - ringbuffer_data_available(&i2c->rx_buffer))) {
 		return ENOMEM;
 	}
     
     // Shift address leaving LSB W/R bit set to signal a read
-    address = address << 1 || 0x01
+    address = (address << 1) + 1;
 
     // Load address into the tx_buffer (this is where the interrupt will grab it).
     ringbuffer_enqueue(&i2c->tx_buffer, address);
@@ -322,12 +319,12 @@ int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *d
 	// data transmission/reception done through interrupt handler
 	// TODO remove potential for infinite loop (e.g. timeout?)
 	// TODO perhaps need some flags/signals from interrupts?
-	platform_i2c_start_controller(i2c);
+	platform_i2c_start_controller(i2c, false);
 	while(!ringbuffer_data_available(&i2c->rx_buffer));
 
 	// Remove data from rx ring buffer
-	for(int i=0; i<data_len; i++) {
-		ringbuffer_dequeue(&i2c->rx_buffer, &data[i]);
+	for(uint32_t i=0; i<data_len; i++) {
+		data[i] = ringbuffer_dequeue(&i2c->rx_buffer);
 	}
 
 	return 0;
@@ -345,10 +342,10 @@ int i2c_monitor_mode_read_rx_buffer(i2c_t *i2c, size_t data_len, uint8_t *data, 
 	}
 
 	// Remove data from rx ring buffer
-	int i;
-	size_t avail_data = ringbuffer_data_avaiable(&i2c->rx_buffer);
+	uint32_t i;
+	size_t avail_data = ringbuffer_data_available(&i2c->rx_buffer);
 	for(i = 0; i<data_len && i<avail_data; i++) {
-		ringbuffer_dequeue(&i2c->rx_buffer, &data[i]);
+		data[i] = ringbuffer_dequeue(&i2c->rx_buffer);
 	}
 	*actual_len = i;
 

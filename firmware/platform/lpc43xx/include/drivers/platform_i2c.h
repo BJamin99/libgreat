@@ -55,7 +55,6 @@
 typedef enum i2c_stat_code i2c_stat_code_t;
 
 typedef struct i2c i2c_t;
-
 /**
  * I2C numbers for each supported UART on the LPC43xx.
  */
@@ -195,3 +194,26 @@ typedef struct {
 } platform_i2c_t;
 
 #endif
+
+//static platform_i2c_registers_t *get_i2c_registers(i2c_number_t i2c_number);
+//int platform_i2c_init(i2c_t *i2c);
+i2c_stat_code_t platform_i2c_get_stat(i2c_t *i2c);
+//int platform_i2c_set_up_interrupt(i2c_t *i2c);
+uint32_t platform_i2c_turn_on_ack(i2c_t *i2c);
+uint32_t platform_i2c_turn_off_ack(i2c_t *i2c);
+uint32_t platform_i2c_turn_on_interrupt(i2c_t *i2c);
+uint32_t platform_i2c_turn_off_interrupt(i2c_t *i2c);
+uint32_t platform_i2c_stop_controller(i2c_t *i2c);
+uint32_t platform_i2c_start_controller(i2c_t *i2c, bool restart);
+uint32_t platform_i2c_enable(i2c_t *i2c);
+uint32_t platform_i2c_disable(i2c_t *i2c);
+uint32_t platform_i2c_write_byte(i2c_t *i2c, uint8_t byte);
+uint32_t platform_i2c_read_byte(i2c_t *i2c, uint8_t *byte);
+uint32_t platform_i2c_set_7bit_address(i2c_t *i2c, uint32_t perip_num, uint8_t address, bool gc);
+uint32_t platform_i2c_set_7bit_addres_mask(i2c_t *i2c, uint32_t perip_num, uint8_t mask);
+uint32_t platform_i2c_set_scl_high_duty_cycle(i2c_t *i2c, uint16_t duty);
+uint32_t platform_i2c_set_scl_low_duty_cycle(i2c_t *i2c, uint16_t duty);
+uint32_t platform_i2c_monitor_mode_enable(i2c_t *i2c, bool scl_enable, bool match);
+uint32_t platform_i2c_monitor_mode_disable(i2c_t *i2c);
+uint32_t platform_i2c_get_parent_clock_frequency(i2c_t *i2c);
+

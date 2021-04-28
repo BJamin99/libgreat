@@ -7,7 +7,7 @@
 #include <debug.h>
 
 #include <drivers/scu.h>
-#include <drivers/platform_i2c.h>
+#include <drivers/i2c.h>
 #include <drivers/arm_vectors.h>
 #include <drivers/platform_clock.h>
 
@@ -43,7 +43,10 @@ typedef struct {
  * Note I2C0 has its own pins and are not multiplexed GPIO
  */
 i2c_pins_t i2c_pins[] = {
-	NULL,
+	{
+		.scl = { .group = 0, .pin = 0, .function = 0},
+		.sda = { .group = 0, .pin = 0, .function = 0}
+	},
 	{
 		.scl = { .group = 2, .pin = 4, .function = 1 },
 		.sda = { .group = 2, .pin = 3, .function = 1 }
@@ -77,8 +80,8 @@ static platform_branch_clock_t *get_clock_for_i2c(i2c_number_t i2c_number)
 	platform_clock_control_register_block_t *ccu = get_platform_clock_control_registers();
 
 	switch(i2c_number)  {
-		case 0: return &ccu->apb1->i2c0;
-		case 1: return &ccu->apb3->i2c1;
+		case 0: return &ccu->apb1.i2c0;
+		case 1: return &ccu->apb3.i2c1;
 	}
 
 	pr_error("platform_i2c: cannot find a clock for I2C %d!\n", i2c_number);
@@ -109,7 +112,7 @@ int platform_i2c_init(i2c_t *i2c)
 	platform_enable_branch_clock(i2c->platform_data.clock, false);
 
 	// Connect our I2C pins to the I2C hardware (only needed for I2C1)
-	if (pins) {
+	if (i2c->number == 1) {
 		platform_scu_configure_pin_i2c(pins.scl.group, pins.scl.pin, pins.scl.function);
 		platform_scu_configure_pin_i2c(pins.sda.group, pins.sda.pin, pins.sda.function);
 	}
@@ -133,43 +136,43 @@ static void platform_i2c1_interrupt(void)
 	i2c_interrupt(active_i2c_objects[1]);
 }
 
-i2c_stat_code platform_i2c_get_stat(i2c *i2c)
+i2c_stat_code_t platform_i2c_get_stat(i2c_t *i2c)
 {
-	switch(&i2c->reg->status) {
+	switch(i2c->reg->status) {
 		//Controller Transmitter Mode
-		case STAT_CODE_START_TRANS: return i2c_stat_code.START_TRANS;
-		case STAT_CODE_REPEAT_START_TRANS: return i2c_stat_code.REPEAT_START_TRANS;
-		case STAT_CODE_SLA_W_TRANS_ACK: return i2c_stat_code.SLA_W_TRANS_ACK;
-		case STAT_CODE_SLA_W_TRANS_NACK: return i2c_stat_code.SLA_W_TRANS_NACK;
-		case STAT_CODE_CTRL_DAT_TRANS_ACK: return i2c_stat_code.CTRL_DAT_TRANS_ACK;
-		case STAT_CODE_CTRL_DAT_TRANS_NACK: return i2c_stat_code.CTRL_DAT_TRANS_NACK;
+		case STAT_CODE_START_TRANS: return START_TRANS;
+		case STAT_CODE_REPEAT_START_TRANS: return REPEAT_START_TRANS;
+		case STAT_CODE_SLA_W_TRANS_ACK: return SLA_W_TRANS_ACK;
+		case STAT_CODE_SLA_W_TRANS_NACK: return SLA_W_TRANS_NACK;
+		case STAT_CODE_CTRL_DAT_TRANS_ACK: return CTRL_DAT_TRANS_ACK;
+		case STAT_CODE_CTRL_DAT_TRANS_NACK: return CTRL_DAT_TRANS_NACK;
 		//Controller Transmitter/Receiver Mode
-		case STAT_CODE_ARB_LOST: return i2c_stat_code.ARB_LOST;
+		case STAT_CODE_ARB_LOST: return ARB_LOST;
 		//Controller Receiver Mode
-		case STAT_CODE_SLA_R_TRANS_ACK: return i2c_stat_code.SLA_R_TRANS_ACK;
-		case STAT_CODE_SLA_R_TRANS_NACK: return i2c_stat_code.SLA_R_TRANS_NACK;
-		case STAT_CODE_CTRL_DAT_RECV_ACK: return i2c_stat_code.CTRL_DAT_RECV_ACK;
-		case STAT_CODE_CTRL_DAT_RECV_NACK: return i2c_stat_code.CTRL_DAT_RECV_NACK;
+		case STAT_CODE_SLA_R_TRANS_ACK: return SLA_R_TRANS_ACK;
+		case STAT_CODE_SLA_R_TRANS_NACK: return SLA_R_TRANS_NACK;
+		case STAT_CODE_CTRL_DAT_RECV_ACK: return CTRL_DAT_RECV_ACK;
+		case STAT_CODE_CTRL_DAT_RECV_NACK: return CTRL_DAT_RECV_NACK;
 		//Peripheral Receiver Mode
-		case STAT_CODE_SLA_W_RECV_ACK: return i2c_stat_code.SLA_W_RECV_ACK;
-		case STAT_CODE_ARB_LOST_SLA_W_RECV_ACK: return i2c_stat_code.ARB_LOST_SLA_W_RECV_ACK;
-		case STAT_CODE_GC_RECV_ACK: return i2c_stat_code.GC_RECV_ACK;
-		case STAT_CODE_ARB_LOST_GC_RECV_ACK: return i2c_stat_code.ARB_LOST_GC_RECV_ACK;
-		case STAT_CODE_PERIP_DAT_RECV_ACK: return i2c_stat_code.PERIP_DAT_RECV_ACK;
-		case STAT_CODE_PERIP_DAT_RECV_NACK: return i2c_stat_code.PERIP_DAT_RECV_NACK;
-		case STAT_CODE_GC_DAT_RECV_ACK: return i2c_stat_code.GC_DAT_RECV_ACK;
-		case STAT_CODE_GC_DAT_RECV_NACK: return i2c_stat_code.GC_DAT_RECV_NACK;
-		case STAT_CODE_PERIP_STOP_REPEAT_START: return i2c_stat_code.PERIP_STOP_REPEAT_START;
+		case STAT_CODE_SLA_W_RECV_ACK: return SLA_W_RECV_ACK;
+		case STAT_CODE_ARB_LOST_SLA_W_RECV_ACK: return ARB_LOST_SLA_W_RECV_ACK;
+		case STAT_CODE_GC_RECV_ACK: return GC_RECV_ACK;
+		case STAT_CODE_ARB_LOST_GC_RECV_ACK: return ARB_LOST_GC_RECV_ACK;
+		case STAT_CODE_PERIP_DAT_RECV_ACK: return PERIP_DAT_RECV_ACK;
+		case STAT_CODE_PERIP_DAT_RECV_NACK: return PERIP_DAT_RECV_NACK;
+		case STAT_CODE_GC_DAT_RECV_ACK: return GC_DAT_RECV_ACK;
+		case STAT_CODE_GC_DAT_RECV_NACK: return GC_DAT_RECV_NACK;
+		case STAT_CODE_PERIP_STOP_REPEAT_START: return PERIP_STOP_REPEAT_START;
 		//Peripheral Transmitter Mode
-		case STAT_CODE_SLA_R_RECV_ACK: return i2c_stat_code.SLA_R_RECV_ACK;
-		case STAT_CODE_ARB_LOST_SLA_R_RECV_ACK: return i2c_stat_code.ARB_LOST_SLA_R_RECV_ACK;
-		case STAT_CODE_PERIP_DAT_TRANS_ACK: return i2c_stat_code.PERIP_DAT_TRANS_ACK;
-		case STAT_CODE_PERIP_DAT_TRANS_NACK: return i2c_stat_code.PERIP_DAT_TRANS_NACK;
-		case STAT_CODE_PERIP_LAST_DAT_ACK: return i2c_stat_code.PERIP_LAST_DAT_ACK;
+		case STAT_CODE_SLA_R_RECV_ACK: return SLA_R_RECV_ACK;
+		case STAT_CODE_ARB_LOST_SLA_R_RECV_ACK: return ARB_LOST_SLA_R_RECV_ACK;
+		case STAT_CODE_PERIP_DAT_TRANS_ACK: return PERIP_DAT_TRANS_ACK;
+		case STAT_CODE_PERIP_DAT_TRANS_NACK: return PERIP_DAT_TRANS_NACK;
+		case STAT_CODE_PERIP_LAST_DAT_ACK: return PERIP_LAST_DAT_ACK;
 		//Miscellaneious
-		case STAT_CODE_NO_RELEVANT_STATE_INFO: return i2c_stat_code.NO_RELEVANT_STATE_INFO;
-		case STAT_CODE_BUS_ERROR: return i2c_stat_code.BUS_ERROR;
-		default:  return i2c_stat_code.UNKNOWN_STAT_CODE;
+		case STAT_CODE_NO_RELEVANT_STATE_INFO: return NO_RELEVANT_STATE_INFO;
+		case STAT_CODE_BUS_ERROR: return BUS_ERROR;
+		default:  return UNKNOWN_STAT_CODE;
 	}
 }
 
@@ -284,7 +287,7 @@ uint32_t platform_i2c_disable(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->i2c_enable_clr = 1;
+	i2c->reg->i2c_disable = 1;
 
 	return 0;
 }
@@ -302,7 +305,7 @@ uint32_t platform_i2c_read_byte(i2c_t *i2c, uint8_t *byte) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	&byte = (uint8_t)i2c->reg->data_buffer;
+	*byte = (uint8_t)i2c->reg->data_buffer;
 
 	return 0;
 }
