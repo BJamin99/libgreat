@@ -23,7 +23,7 @@ static uint8_t i2c_tx_buffer[256];
  *
  * @param i2c A I2C structure with configuration fields pre-populated. See i2c.h.
  */
-int i2c_init(i2c_t *i2c)
+int i2c_initialize(i2c_t *i2c)
 {
 	// Perform the platform-specific initialization for the given I2C.
 	int rc = platform_i2c_init(i2c);

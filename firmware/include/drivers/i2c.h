@@ -111,7 +111,7 @@ typedef enum i2c_stat_code {
  *
  * @param i2c A I2C structure with configuration fields pre-populated. See above.
  */
-int i2c_init(i2c_t *i2c);
+int i2c_initialize(i2c_t *i2c);
 
 
 /**
@@ -152,5 +152,11 @@ void i2c_transmit_synchronous(i2c_t *i2c, uint8_t byte);
  * @return The total number of bytes read.
  */
 size_t i2c_read(i2c_t *i2c, void *buffer, size_t count);
+
+
+
+int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data);
+int i2c_start(i2c_t *i2c);
+int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data);
 
 #endif
