@@ -82,15 +82,56 @@ int i2c_init(i2c_t *i2c)
 			}
 		}
 	}
-
-	rc = platform_i2c_enable(i2c);
-	if(rc) {
-		return rc;
-	}
 	
-	return 0;
+	return platform_i2c_enable(i2c);
 }
 
+/**
+ * Function called to disable i2c
+ */
+int i2c_disable(i2c_t *i2c)
+{
+	return platform_i2c_disable(i2c);
+}
+
+/**
+ * Function called to send i2c stop
+ */
+int i2c_stop(i2c_t *i2c)
+{
+	return platform_i2c_stop_controller(i2c);
+}
+
+/**
+ * Function called to send i2c start
+ */
+int i2c_start(i2c_t *i2c)
+{
+	return platform_i2c_start_controller(i2c);
+}
+
+/**
+ * Function called to send i2c byte
+ */
+int i2c_tx_byte(i2c_t *i2c, uint8_t byte)
+{
+	return platform_i2c_write_byte(i2c, byte);
+}
+
+/**
+ * Function called to read i2c byte
+ */
+uint8_t i2c_rx_byte(i2c_t *i2c, bool ack)
+{
+	uint8_t byte;
+	if(ack){
+		platform_i2c_turn_on_ack(i2c);
+	} else {
+		platform_i2c_turn_off_ack(i2c);
+	}
+	platform_i2c_read_byte(i2c, &byte);
+	return byte;
+}
 
 /**
  * Function called as the main handler for a I2C interrupt.
