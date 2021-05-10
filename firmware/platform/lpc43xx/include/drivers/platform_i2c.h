@@ -196,9 +196,15 @@ typedef struct {
 #endif
 
 //static platform_i2c_registers_t *get_i2c_registers(i2c_number_t i2c_number);
-//int platform_i2c_init(i2c_t *i2c);
+/**
+ * Performs platform-specific initialization for the given I2C.
+ */
+int platform_i2c_init(i2c_t *i2c);
 i2c_stat_code_t platform_i2c_get_stat(i2c_t *i2c);
-//int platform_i2c_set_up_interrupt(i2c_t *i2c);
+/**
+ * Performs platform-specific initialization for the system's I2C interrupt.
+ */
+int platform_i2c_set_up_interrupt(i2c_t *i2c);
 uint32_t platform_i2c_turn_on_ack(i2c_t *i2c);
 uint32_t platform_i2c_turn_off_ack(i2c_t *i2c);
 uint32_t platform_i2c_turn_on_interrupt(i2c_t *i2c);
@@ -215,5 +221,8 @@ uint32_t platform_i2c_set_scl_high_duty_cycle(i2c_t *i2c, uint16_t duty);
 uint32_t platform_i2c_set_scl_low_duty_cycle(i2c_t *i2c, uint16_t duty);
 uint32_t platform_i2c_monitor_mode_enable(i2c_t *i2c, bool scl_enable, bool match);
 uint32_t platform_i2c_monitor_mode_disable(i2c_t *i2c);
+/**
+ * @return the frequency of the clock driving this I2C, in Hz
+ */
 uint32_t platform_i2c_get_parent_clock_frequency(i2c_t *i2c);
 

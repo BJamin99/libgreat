@@ -107,7 +107,7 @@ int i2c_stop(i2c_t *i2c)
  */
 int i2c_start(i2c_t *i2c)
 {
-	return platform_i2c_start_controller(i2c);
+	return platform_i2c_start_controller(i2c, true);
 }
 
 /**
@@ -134,6 +134,23 @@ uint8_t i2c_rx_byte(i2c_t *i2c, bool ack)
 }
 
 /**
+ * Function called to set i2c SCL high duty cycle
+ */
+int i2c_set_scl_high_duty_cycle(i2c_t *i2c, uint16_t duty_cycle)
+{
+	return platform_i2c_set_scl_high_duty_cycle(i2c, duty_cycle);
+}
+
+/**
+ * Function called to set i2c SCL low duty cycle
+ */
+int i2c_set_scl_low_duty_cycle(i2c_t *i2c, uint16_t duty_cycle)
+{
+        return platform_i2c_set_scl_low_duty_cycle(i2c, duty_cycle);
+}
+	
+
+/**
  * Function called as the main handler for a I2C interrupt.
  */
 void i2c_interrupt(i2c_t *i2c)
@@ -148,6 +165,7 @@ void i2c_interrupt(i2c_t *i2c)
 				platform_i2c_stop_controller(i2c);				
 				break;
 			}
+			__attribute__((fallthrough));
 		case START_TRANS: 
 		case REPEAT_START_TRANS: 
 		//Controller Transmitter State

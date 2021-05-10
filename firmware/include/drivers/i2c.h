@@ -115,27 +115,6 @@ int i2c_initialize(i2c_t *i2c);
 
 
 /**
- * Platform-specific functions.
- */
-
-/**
- * Performs platform-specific initialization for the given I2C.
- */
-int platform_i2c_init(i2c_t *i2c);
-
-/**
- * @return the frequency of the clock driving this I2C, in Hz
- */
-uint32_t platform_i2c_get_parent_clock_frequency(i2c_t *i2c);
-
-
-/**
- * Performs platform-specific initialization for the system's I2C interrupt.
- */
-int platform_i2c_set_up_interrupt(i2c_t *i2c);
-
-
-/**
  * Perform a I2C transmit, but block until the transmission is accepted.
  */
 void i2c_transmit_synchronous(i2c_t *i2c, uint8_t byte);
@@ -158,5 +137,11 @@ size_t i2c_read(i2c_t *i2c, void *buffer, size_t count);
 int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data);
 int i2c_start(i2c_t *i2c);
 int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data);
+int i2c_set_scl_low_duty_cycle(i2c_t *i2c, uint16_t duty_cycle);
+int i2c_set_scl_high_duty_cycle(i2c_t *i2c, uint16_t duty_cycle);
+int i2c_stop(i2c_t *i2c);
+int i2c_start(i2c_t *i2c);
+int i2c_tx_byte(i2c_t *i2c, uint8_t byte);
+uint8_t i2c_rx_byte(i2c_t *i2c, bool ack);
 
 #endif
