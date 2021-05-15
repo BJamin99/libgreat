@@ -319,6 +319,8 @@ size_t i2c_read(i2c_t *i2c, void *buffer, size_t count)
  */
 int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data)
 {
+	uint32_t timeout = 0;
+
 	if (!i2c) {
 		return ENODEV;
 	}
@@ -331,8 +333,8 @@ int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *
 		return ENOMEM;
 	}
     
-    // Shift address leaving LSB W/R bit unset to signal a write
-    address = address << 1;
+	// Shift address leaving LSB W/R bit unset to signal a write
+	address = address << 1;
 
 	// Load address plus data into tx ring buffer
 	ringbuffer_enqueue(&i2c->tx_buffer, address);
@@ -343,7 +345,12 @@ int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *
 	// Trigger a start condition to initiate master controller mode
 	// data transmission done through interrupt handler
 	platform_i2c_start_controller(i2c, false);
-	while(!ringbuffer_data_available(&i2c->tx_buffer));
+        while(ringbuffer_data_available(&i2c->tx_buffer)) {
+          if(timeout >= i2c->timeout){
+            return EIO;
+          }
+          timeout++;
+        }
 	return 0;
 }
 
@@ -356,6 +363,8 @@ int i2c_controller_write(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *
  */
 int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *data)
 {
+	uint32_t timeout = 0;
+
 	if (!i2c) {
 		return ENODEV;
 	}
@@ -368,22 +377,38 @@ int i2c_controller_read(i2c_t *i2c, uint8_t address, size_t data_len, uint8_t *d
 		return ENOMEM;
 	}
     
-    // Shift address leaving LSB W/R bit set to signal a read
-    address = (address << 1) + 1;
+	// Shift address leaving LSB W/R bit set to signal a read
+	address = (address << 1) + 1;
 
-    // Load address into the tx_buffer (this is where the interrupt will grab it).
-    ringbuffer_enqueue(&i2c->tx_buffer, address);
+	// Load address into the tx_buffer (this is where the interrupt will grab it).
+	ringbuffer_enqueue(&i2c->tx_buffer, address);
 
 	// Trigger a start condition to initiate master controller mode
 	// data transmission/reception done through interrupt handler
-	// TODO remove potential for infinite loop (e.g. timeout?)
-	// TODO perhaps need some flags/signals from interrupts?
 	platform_i2c_start_controller(i2c, false);
-	while(!ringbuffer_data_available(&i2c->rx_buffer));
+	while(ringbuffer_data_available(&i2c->tx_buffer)) {
+	  if(timeout >= i2c->timeout){
+	    return EIO;
+	  }
+	  timeout++;
+	}
+	timeout = 0;
+	while(!ringbuffer_data_available(&i2c->rx_buffer)) {
+	  if(timeout >= i2c->timeout) {
+	    return ENODATA;
+	  }
+	}
 
 	// Remove data from rx ring buffer
 	for(uint32_t i=0; i<data_len; i++) {
-		data[i] = ringbuffer_dequeue(&i2c->rx_buffer);
+	  if(ringbuffer_data_available(&i2c->rx_buffer)){	
+	    data[i] = ringbuffer_dequeue(&i2c->rx_buffer);
+	  }
+	  else {
+	    //hack to return zeros if we haven't received data
+	    //TODO return some error to signal no data (may need some sort of timeout?)
+	    data[i] = 0;
+	  }
 	}
 
 	return 0;

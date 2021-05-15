@@ -27,6 +27,14 @@ typedef struct i2c {
 	// The size of the buffer to be allocated for buffered reads/writes.
 	// If this is set to 0, only synchronous reads and writes are supported.
 	size_t buffer_size;
+
+	/**
+	 * i2c timeout value for waiting for ACK/NACK
+	 * currently this value is platform dependent (i.e. this isn't an actual "time" measurement)
+	 * (current lpc43xx code increments a counter in a while loop until it reaches this number)
+	 * TODO firm-up the definition of this
+	 */
+	uint32_t timeout;
 	
 	// PERIPHERAL ADDRESSES
 	// Currently peripheral addresses must be specifed as part of initialization.

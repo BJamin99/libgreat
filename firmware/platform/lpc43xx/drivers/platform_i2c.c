@@ -103,13 +103,13 @@ int platform_i2c_init(i2c_t *i2c)
 	}
 
 	// Figure out the clock that drives the relevant I2C
-	i2c->platform_data.clock = get_clock_for_i2c(i2c->number);
-	if (!i2c->platform_data.clock) {
-		return EINVAL;
-	}
+//	i2c->platform_data.clock = get_clock_for_i2c(i2c->number);
+//	if (!i2c->platform_data.clock) {
+//		return EINVAL;
+//	}
 
 	// ... and ensure that it's on.
-	platform_enable_branch_clock(i2c->platform_data.clock, false);
+//	platform_enable_branch_clock(i2c->platform_data.clock, false);
 
 	// Connect our I2C pins to the I2C hardware (only needed for I2C1)
 	if (i2c->number == 1) {
