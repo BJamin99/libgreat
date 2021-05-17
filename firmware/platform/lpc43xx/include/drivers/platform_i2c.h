@@ -16,37 +16,37 @@
 #define PLAT_PERIP_MASK true
 
 //Controller Transmitter Mode
-#define STAT_CODE_START_TRANS 0x08 >> 3
-#define STAT_CODE_REPEAT_START_TRANS 0x10 >> 3
-#define STAT_CODE_SLA_W_TRANS_ACK 0x18 >> 3
-#define STAT_CODE_SLA_W_TRANS_NACK 0x20 >> 3
-#define STAT_CODE_CTRL_DAT_TRANS_ACK 0x28 >> 3
-#define STAT_CODE_CTRL_DAT_TRANS_NACK 0x30 >> 3
+#define STAT_CODE_START_TRANS 0x08
+#define STAT_CODE_REPEAT_START_TRANS 0x10
+#define STAT_CODE_SLA_W_TRANS_ACK 0x18
+#define STAT_CODE_SLA_W_TRANS_NACK 0x20
+#define STAT_CODE_CTRL_DAT_TRANS_ACK 0x28
+#define STAT_CODE_CTRL_DAT_TRANS_NACK 0x30
 //Controller Transmitter/Receiver Mode
-#define STAT_CODE_ARB_LOST 0x38 >> 3
+#define STAT_CODE_ARB_LOST 0x38
 //Controller Receiver Mode
-#define STAT_CODE_SLA_R_TRANS_ACK 0x40 >> 3
-#define STAT_CODE_SLA_R_TRANS_NACK 0x48 >> 3
-#define STAT_CODE_CTRL_DAT_RECV_ACK 0x50 >> 3
-#define STAT_CODE_CTRL_DAT_RECV_NACK 0x58 >> 3
+#define STAT_CODE_SLA_R_TRANS_ACK 0x40
+#define STAT_CODE_SLA_R_TRANS_NACK 0x48
+#define STAT_CODE_CTRL_DAT_RECV_ACK 0x50
+#define STAT_CODE_CTRL_DAT_RECV_NACK 0x58
 //Peripheral Receiver Mode
-#define STAT_CODE_SLA_W_RECV_ACK 0x60 >> 3
-#define STAT_CODE_ARB_LOST_SLA_W_RECV_ACK 0x68 >> 3
-#define STAT_CODE_GC_RECV_ACK 0x70 >> 3
-#define STAT_CODE_ARB_LOST_GC_RECV_ACK 0x78 >> 3
-#define STAT_CODE_PERIP_DAT_RECV_ACK 0x80 >> 3
-#define STAT_CODE_PERIP_DAT_RECV_NACK 0x88 >> 3
-#define STAT_CODE_GC_DAT_RECV_ACK 0x90 >> 3
-#define STAT_CODE_GC_DAT_RECV_NACK 0x98 >> 3
-#define STAT_CODE_PERIP_STOP_REPEAT_START 0xA0 >> 3
+#define STAT_CODE_SLA_W_RECV_ACK 0x60
+#define STAT_CODE_ARB_LOST_SLA_W_RECV_ACK 0x68
+#define STAT_CODE_GC_RECV_ACK 0x70
+#define STAT_CODE_ARB_LOST_GC_RECV_ACK 0x78
+#define STAT_CODE_PERIP_DAT_RECV_ACK 0x80
+#define STAT_CODE_PERIP_DAT_RECV_NACK 0x88
+#define STAT_CODE_GC_DAT_RECV_ACK 0x90
+#define STAT_CODE_GC_DAT_RECV_NACK 0x98
+#define STAT_CODE_PERIP_STOP_REPEAT_START 0xA0
 //Peripheral Transmitter Mode
-#define STAT_CODE_SLA_R_RECV_ACK 0xA8 >> 3
-#define STAT_CODE_ARB_LOST_SLA_R_RECV_ACK 0xB0 >> 3
-#define STAT_CODE_PERIP_DAT_TRANS_ACK 0xB8 >> 3
-#define STAT_CODE_PERIP_DAT_TRANS_NACK 0xC0 >> 3
-#define STAT_CODE_PERIP_LAST_DAT_ACK 0xC8 >> 3
+#define STAT_CODE_SLA_R_RECV_ACK 0xA8
+#define STAT_CODE_ARB_LOST_SLA_R_RECV_ACK 0xB0
+#define STAT_CODE_PERIP_DAT_TRANS_ACK 0xB8
+#define STAT_CODE_PERIP_DAT_TRANS_NACK 0xC0
+#define STAT_CODE_PERIP_LAST_DAT_ACK 0xC8
 //Miscellaneious
-#define STAT_CODE_NO_RELEVANT_STATE_INFO 0xF8 >> 3
+#define STAT_CODE_NO_RELEVANT_STATE_INFO 0xF8
 #define STAT_CODE_BUS_ERROR 0x00
 
 // I2C generic status codes; platform interrupt routines need to translate platform
@@ -78,107 +78,147 @@ enum {
  */
 typedef volatile struct ATTR_PACKED {
 
-	//uint32_t control_set;
+	uint32_t control_set;
+	/*
 	struct {
 		uint32_t                : 2;
 		uint32_t assert_ack     : 1;
 		uint32_t interrupt      : 1;
 		uint32_t stop           : 1;
 		uint32_t start          : 1;
-        uint32_t i2c_enable     : 1;
-        uint32_t                : 25;
+		uint32_t i2c_enable     : 1;
+		uint32_t                : 25;
 	};
-	//uint32_t status;
+	*/
+#define I2C_ASSERT_ACK 0x04
+#define I2C_INTERRUPT 0x08
+#define I2C_STOP_FLAG 0x10
+#define I2C_START_FLAG 0x20
+#define I2C_INTERFACE 0x40
+	uint32_t status;
+	/*
 	struct {
 		uint32_t                : 3;
 		uint32_t status         : 5;
 		uint32_t                : 24;
 	};
-	//uint32_t data;
+	*/
+	uint32_t data;
+	/*
 	struct {
 		uint32_t data           : 8;
 		uint32_t                : 24;
 	};
-	//uint32_t peripheral_address_0;
+	*/
+	uint32_t peripheral_address_0;
+	/*
 	struct {
 		uint32_t general_call_0 : 1;
 		uint32_t address_0      : 7;
 		uint32_t                : 24;
 	};
-	//uint32_t duty_cycle_high_half_word;
+	*/
+	uint32_t duty_cycle_high_half_word;
+	/*
    	struct {
    		uint32_t duty_cycle_high_half_word : 16;
    		uint32_t                           : 16;
    	};
-	//uint32_t duty_cycle_low_half_word;
+	*/
+	uint32_t duty_cycle_low_half_word;
+	/*
    	struct {
    		uint32_t duty_cycle_low_half_word  : 16;
    		uint32_t                           : 16;
    	};
-	//uint32_t control_clear;
+	*/
+	uint32_t control_clr;
+	/*
 	struct {
 		uint32_t                : 2;
 		uint32_t assert_ack_clr : 1;
 		uint32_t interrupt_clr  : 1;
 		uint32_t                : 1;
 		uint32_t start_clr      : 1;
-        uint32_t i2c_disable    : 1;
-        uint32_t                : 25;
+		uint32_t i2c_disable    : 1;
+		uint32_t                : 25;
 	};
-	//uint32_t monitor_mode_control;
+	*/
+	uint32_t monitor_mode_control;
+	/*
 	struct {
 		uint32_t monitor_mode_enable : 1;
 		uint32_t scl_output_enable   : 1;
 		uint32_t interrupt_match     : 1;
 		uint32_t                     : 29;
 	};
-	//uint32_t peripheral_address_1;
+	*/
+#define I2C_MON_MODE_EN 0x01
+#define I2C_MON_MODE_SCL_OUT_EN 0x02
+#define I2C_MON_MODE_INT_MATCH 0x04
+	uint32_t peripheral_address_1;
+	/*
 	struct {
 		uint32_t general_call_1 : 1;
 		uint32_t address_1      : 7;
 		uint32_t                : 24;
 	};
-	//uint32_t peripheral_address_2;
+	*/
+	uint32_t peripheral_address_2;
+	/*
 	struct {
 		uint32_t general_call_2 : 1;
 		uint32_t address_2      : 7;
 		uint32_t                : 24;
 	};
-	//uint32_t peripheral_address_3;
+	*/
+	uint32_t peripheral_address_3;
+	/*
 	struct {
 		uint32_t general_call_3 : 1;
 		uint32_t address_3      : 7;
 		uint32_t                : 24;
 	};
-	//uint32_t data_buffer
+	*/
+	uint32_t data_buffer;
+	/*
 	struct {
 		uint32_t data_buffer    : 8;
 		uint32_t                : 24;
 	};
-	//uint32_t peripheral_address_mask_0;
+	*/
+	uint32_t peripheral_address_mask_0;
+	/*
 	struct {
 		uint32_t                : 1;
 		uint32_t address_mask_0 : 7;
 		uint32_t                : 24;
 	};
-	//uint32_t peripheral_address_mask_1;
+	*/
+	uint32_t peripheral_address_mask_1;
+	/*
 	struct {
 		uint32_t                : 1;
 		uint32_t address_mask_1 : 7;
 		uint32_t                : 24;
 	};
-	//uint32_t peripheral_address_mask_2;
+	*/
+	uint32_t peripheral_address_mask_2;
+	/*
 	struct {
 		uint32_t                : 1;
 		uint32_t address_mask_2 : 7;
 		uint32_t                : 24;
 	};
-	//uint32_t peripheral_address_mask_3;
+	*/
+	uint32_t peripheral_address_mask_3;
+	/*
 	struct {
 		uint32_t                : 1;
 		uint32_t address_mask_3 : 7;
 		uint32_t                : 24;
 	};
+	*/
 
 } platform_i2c_registers_t;
 

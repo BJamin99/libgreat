@@ -208,7 +208,7 @@ uint32_t platform_i2c_turn_on_ack(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->assert_ack = 1;
+	i2c->reg->control_set = I2C_ASSERT_ACK;
 
 	return 0;
 }
@@ -218,7 +218,7 @@ uint32_t platform_i2c_turn_off_ack(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->assert_ack_clr = 1;
+	i2c->reg->control_clr = I2C_ASSERT_ACK;
 	
 	return 0;
 }
@@ -228,7 +228,7 @@ uint32_t platform_i2c_turn_on_interrupt(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->interrupt = 1;
+	i2c->reg->control_set = I2C_INTERRUPT;
 
 	return 0;
 }
@@ -238,7 +238,7 @@ uint32_t platform_i2c_turn_off_interrupt(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->interrupt_clr = 1;
+	i2c->reg->control_clr = I2C_INTERRUPT;
 
 	return 0;
 }
@@ -249,8 +249,8 @@ uint32_t platform_i2c_stop_controller(i2c_t *i2c) {
 		return EINVAL;
 	}
 	//ensure STA is cleared, else a "restart" is performed
-	i2c->reg->start_clr = 1;
-	i2c->reg->stop = 1;
+	i2c->reg->control_clr = I2C_START_FLAG;
+	i2c->reg->control_set = I2C_STOP_FLAG;
 
 	return 0;
 }
@@ -263,11 +263,11 @@ uint32_t platform_i2c_start_controller(i2c_t *i2c, bool restart) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	if(i2c->reg->start && restart) {
-		i2c->reg->stop = 1;
+	if((i2c->reg->control_set&I2C_START_FLAG) && restart) {
+		i2c->reg->control_set = I2C_STOP_FLAG;
 	}
 	else {
-		i2c->reg->start = 1;
+		i2c->reg->control_set = I2C_START_FLAG;
 	}
 	return 0;
 }
@@ -277,7 +277,7 @@ uint32_t platform_i2c_enable(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->i2c_enable = 1;
+	i2c->reg->control_set = I2C_INTERFACE;
 	
 	return 0;
 }
@@ -287,7 +287,7 @@ uint32_t platform_i2c_disable(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->i2c_disable = 1;
+	i2c->reg->control_clr = I2C_INTERFACE;
 
 	return 0;
 }
@@ -320,10 +320,10 @@ uint32_t platform_i2c_set_7bit_address(i2c_t *i2c, uint32_t perip_num, uint8_t a
 	}
 	
 	switch(perip_num) {
-		case 0: i2c->reg->address_0 = address; i2c->reg->general_call_0 = gc; break;
-		case 1: i2c->reg->address_1 = address; i2c->reg->general_call_1 = gc; break;
-		case 2: i2c->reg->address_2 = address; i2c->reg->general_call_2 = gc; break;
-		case 3: i2c->reg->address_3 = address; i2c->reg->general_call_3 = gc; break;
+		case 0: i2c->reg->peripheral_address_0 = (address<<1) + gc; break;
+		case 1: i2c->reg->peripheral_address_1 = (address<<1) + gc; break;
+		case 2: i2c->reg->peripheral_address_2 = (address<<1) + gc; break;
+		case 3: i2c->reg->peripheral_address_3 = (address<<1) + gc; break;
 		default: return EINVAL;
 	}
 
@@ -340,10 +340,10 @@ uint32_t platform_i2c_set_7bit_addres_mask(i2c_t *i2c, uint32_t perip_num, uint8
 	}
 	
 	switch(perip_num) {
-		case 0: i2c->reg->address_mask_0 = mask; break;
-		case 1: i2c->reg->address_mask_1 = mask; break;
-		case 2: i2c->reg->address_mask_2 = mask; break;
-		case 3: i2c->reg->address_mask_3 = mask; break;
+		case 0: i2c->reg->peripheral_address_mask_0 = mask<<1; break;
+		case 1: i2c->reg->peripheral_address_mask_1 = mask<<1; break;
+		case 2: i2c->reg->peripheral_address_mask_2 = mask<<1; break;
+		case 3: i2c->reg->peripheral_address_mask_3 = mask<<1; break;
 		default: return EINVAL;
 	}
 	return 0;
@@ -373,9 +373,10 @@ uint32_t platform_i2c_monitor_mode_enable(i2c_t *i2c, bool scl_enable, bool matc
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->monitor_mode_enable = 1;
-	i2c->reg->scl_output_enable = scl_enable;
-	i2c->reg->interrupt_match = match;
+	uint32_t mm = I2C_MON_MODE_EN;
+	if(scl_enable){mm|=I2C_MON_MODE_SCL_OUT_EN;}
+	if(match){mm|=I2C_MON_MODE_INT_MATCH;}
+	i2c->reg->monitor_mode_control = mm;
 
 	return 0;
 }
@@ -384,7 +385,9 @@ uint32_t platform_i2c_monitor_mode_disable(i2c_t *i2c) {
 	if(!i2c || !i2c->reg) {
 		return EINVAL;
 	}
-	i2c->reg->monitor_mode_enable = 0;
+	if(i2c->reg->monitor_mode_control & I2C_MON_MODE_EN){
+		i2c->reg->monitor_mode_control ^= I2C_MON_MODE_EN;
+	}
 	
 	return 0;
 }

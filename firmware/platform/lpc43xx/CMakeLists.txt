@@ -70,7 +70,7 @@ define_libgreat_module(uart
 
 # I2C module
 define_libgreat_module(i2c
-	${PATH_LIBGREAT_FIRMWARE_DRIVERS}/i2c.c
+	${PATH_LIBGREAT_FIRMWARE_DRIVERS}/i2c_drv.c
         ${PATH_LIBGREAT_FIRMWARE_PLATFORM_DRIVERS}/platform_i2c.c
 )
 # DAC module
