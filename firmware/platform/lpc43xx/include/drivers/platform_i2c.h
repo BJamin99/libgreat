@@ -245,10 +245,12 @@ i2c_stat_code_t platform_i2c_get_stat(i2c_t *i2c);
  * Performs platform-specific initialization for the system's I2C interrupt.
  */
 int platform_i2c_set_up_interrupt(i2c_t *i2c);
+int platform_i2c_disable_interrupt(i2c_t *i2c);
 uint32_t platform_i2c_turn_on_ack(i2c_t *i2c);
 uint32_t platform_i2c_turn_off_ack(i2c_t *i2c);
 uint32_t platform_i2c_turn_on_interrupt(i2c_t *i2c);
 uint32_t platform_i2c_turn_off_interrupt(i2c_t *i2c);
+uint32_t platform_i2c_turn_off_start(i2c_t *i2c);
 uint32_t platform_i2c_stop_controller(i2c_t *i2c);
 uint32_t platform_i2c_start_controller(i2c_t *i2c, bool restart);
 uint32_t platform_i2c_enable(i2c_t *i2c);

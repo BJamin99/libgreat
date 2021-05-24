@@ -203,6 +203,24 @@ int platform_i2c_set_up_interrupt(i2c_t *i2c)
 	return 0;
 }
 
+/**
+ * Performs platform-specific disable for the system's I2C interrupt.
+ */
+int platform_i2c_disable_interrupt(i2c_t *i2c)
+{
+        uint32_t irq_number;
+
+        const uint32_t irq_numbers[] = {
+                I2C0_IRQ, I2C1_IRQ
+        };
+
+        // Enable the relevant interrupt in the NVIC.
+        irq_number = irq_numbers[i2c->number];
+        platform_disable_interrupt(irq_number);
+
+        return 0;
+}
+
 uint32_t platform_i2c_turn_on_ack(i2c_t *i2c) {
 	// turn on ack
 	if(!i2c || !i2c->reg) {
@@ -239,6 +257,16 @@ uint32_t platform_i2c_turn_off_interrupt(i2c_t *i2c) {
 		return EINVAL;
 	}
 	i2c->reg->control_clr = I2C_INTERRUPT;
+
+	return 0;
+}
+
+uint32_t platform_i2c_turn_off_start(i2c_t *i2c) {
+	//turn off start
+	if(!i2c || !i2c->reg) {
+		return EINVAL;
+	}
+	i2c->reg->control_clr = I2C_START_FLAG;
 
 	return 0;
 }

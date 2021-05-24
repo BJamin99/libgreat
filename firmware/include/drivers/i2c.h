@@ -85,7 +85,7 @@ typedef struct i2c {
 	 * This can be used so "application" level code can see the last handled status.
 	 * If handling of the status is complete, suggest using NO_RELEVANT_STATE_INFO to clear the status
 	 */
-	i2c_stat_code_t status;
+	volatile i2c_stat_code_t status;
 
 	
 	// PERIPHERAL ADDRESSES
@@ -117,7 +117,7 @@ typedef struct i2c {
 	ringbuffer_t tx_buffer;
 
 	// For Controller reads, need to know how many more bytes to read
-	size_t rx_len;
+	volatile size_t rx_len;
 
 } i2c_t;
 
@@ -132,7 +132,7 @@ typedef struct i2c {
  *
  * @param i2c A I2C structure with configuration fields pre-populated. See above.
  */
-int i2c_initialize(i2c_t *i2c);
+int i2c_initialize(i2c_t *i2c, uint16_t duty_cycle);
 
 
 /**
